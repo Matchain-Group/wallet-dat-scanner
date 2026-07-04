@@ -60,7 +60,7 @@ class Colors:
 
 class WalletDashboard:
     """Main interactive dashboard controller."""
-    
+
     def __init__(self):
         self.config = {
             'api_delay': 0.3,
@@ -74,11 +74,11 @@ class WalletDashboard:
         self.dump_dir = None
         self.wallet_files = []
         self.setup_output_dir()
-        
+
     def setup_output_dir(self):
-        """Create output directory if it doesn't exist."""
+        """Create output directory if it doesn\'t exist."""
         os.makedirs(self.config['output_dir'], exist_ok=True)
-    
+
     def print_header(self):
         """Display main dashboard header."""
         print("\n")
@@ -86,7 +86,7 @@ class WalletDashboard:
         print(f"{'BITCOIN WALLET SCANNER DASHBOARD':^70}")
         print(f"Secure • Fast • Transparent • Open Source")
         print(f"{'='*70}{Colors.END}\n")
-    
+
     def print_menu(self):
         """Display main menu options."""
         print(f"{Colors.BOLD}What would you like to do?{Colors.END}\n")
@@ -96,7 +96,7 @@ class WalletDashboard:
         print(f"{Colors.BLUE}[4]{Colors.END} View previous reports")
         print(f"{Colors.BLUE}[5]{Colors.END} Configure settings")
         print(f"{Colors.BLUE}[0]{Colors.END} Exit\n")
-    
+
     def get_menu_choice(self):
         """Get and validate menu choice."""
         while True:
@@ -104,7 +104,7 @@ class WalletDashboard:
             if choice in ['0', '1', '2', '3', '4', '5']:
                 return choice
             print(f"{Colors.RED}Invalid choice. Please enter 0-5.{Colors.END}\n")
-    
+
     def check_binaries(self):
         """Verify Bitcoin Core binaries are available."""
         for b in ("bitcoind", "bitcoin-cli"):
@@ -114,67 +114,67 @@ class WalletDashboard:
                 print(f"Recommended version: 22.x - 25.x")
                 return False
         return True
-    
+
     def option_1_scan_directory(self):
         """Option 1: Scan wallet.dat files from a directory."""
         print(f"\n{Colors.BOLD}Option 1: Scan Directory{Colors.END}")
         print("-" * 50)
-        
+
         while True:
-            wallet_dir = input(f"\nEnter path to wallets directory: {Colors.YELLOW}").strip() + Colors.END
+            wallet_dir = input(f"\n{Colors.YELLOW}Enter path to wallets directory: {Colors.END}").strip()
             if os.path.isdir(wallet_dir):
                 break
             print(f"{Colors.RED}Directory not found. Please try again.{Colors.END}\n")
-        
+
         wallet_files = sorted(glob.glob(os.path.join(wallet_dir, "*.dat")))
         if not wallet_files:
             print(f"{Colors.RED}No .dat files found in {wallet_dir}{Colors.END}")
             return
-        
+
         print(f"\n{Colors.GREEN}✓ Found {len(wallet_files)} wallet.dat file(s){Colors.END}")
         for wf in wallet_files:
             print(f"  • {os.path.basename(wf)}")
-        
+
         confirm = input(f"\n{Colors.YELLOW}Proceed with scan? (y/n): {Colors.END}").strip().lower()
         if confirm == 'y':
             self.wallet_files = wallet_files
             self.run_scan()
         else:
             print("Scan cancelled.")
-    
+
     def option_2_scan_zip(self):
         """Option 2: Extract and scan wallet.dat files from ZIP."""
         print(f"\n{Colors.BOLD}Option 2: Scan ZIP Archive{Colors.END}")
         print("-" * 50)
-        
+
         while True:
-            zip_path = input(f"\nEnter path to ZIP file: {Colors.YELLOW}").strip() + Colors.END
-            if os.path.isfile(zip_path) and zip_path.endswith('.zip'):
+            zip_path = input(f"\n{Colors.YELLOW}Enter path to ZIP file: {Colors.END}").strip()
+            if os.path.isfile(zip_path) and zip_path.lower().endswith('.zip'):
                 break
             print(f"{Colors.RED}ZIP file not found. Please try again.{Colors.END}\n")
-        
+
         # Create temp directory for extraction
         extract_dir = tempfile.mkdtemp(prefix="wallet_zip_")
         try:
             with zipfile.ZipFile(zip_path, 'r') as z:
                 z.extractall(extract_dir)
-            
+
             wallet_files = []
             for root, dirs, files in os.walk(extract_dir):
                 for file in files:
                     if file.endswith('.dat'):
                         wallet_files.append(os.path.join(root, file))
-            
+
             wallet_files = sorted(wallet_files)
-            
+
             if not wallet_files:
                 print(f"{Colors.RED}No .dat files found in ZIP{Colors.END}")
                 return
-            
+
             print(f"\n{Colors.GREEN}✓ Extracted {len(wallet_files)} wallet.dat file(s){Colors.END}")
             for wf in wallet_files:
                 print(f"  • {os.path.basename(wf)}")
-            
+
             confirm = input(f"\n{Colors.YELLOW}Proceed with scan? (y/n): {Colors.END}").strip().lower()
             if confirm == 'y':
                 self.wallet_files = wallet_files
@@ -186,16 +186,16 @@ class WalletDashboard:
         except Exception as e:
             print(f"{Colors.RED}Error: {str(e)}{Colors.END}")
         finally:
-            if not self.config['keep_dumps']:
-                shutil.rmtree(extract_dir, ignore_errors=True)
-    
+            # Always cleanup temp extraction dir (this is not a dump file)
+            shutil.rmtree(extract_dir, ignore_errors=True)
+
     def option_3_manual_keys(self):
         """Option 3: Paste private keys directly and check balances."""
         print(f"\n{Colors.BOLD}Option 3: Manual Private Key Input{Colors.END}")
         print("-" * 50)
         print(f"\n{Colors.YELLOW}Paste Bitcoin private keys (WIF format), one per line.")
         print("Press Ctrl+D (Unix/Mac) or Ctrl+Z then Enter (Windows) when done.{Colors.END}\n")
-        
+
         private_keys = []
         try:
             while True:
@@ -207,76 +207,76 @@ class WalletDashboard:
                     print(f"{Colors.RED}Invalid key format (expected WIF){Colors.END}")
         except EOFError:
             pass
-        
+
         if not private_keys:
             print(f"{Colors.RED}No valid keys entered.{Colors.END}")
             return
-        
+
         print(f"\n{Colors.GREEN}✓ Loaded {len(private_keys)} private key(s){Colors.END}")
         print(f"\n{Colors.YELLOW}WARNING: This requires Bitcoin Core to derive addresses.{Colors.END}")
         print("Proceeding will load keys into a temporary, isolated wallet.\n")
-        
+
         confirm = input(f"{Colors.YELLOW}Continue? (y/n): {Colors.END}").strip().lower()
         if confirm == 'y':
             self.check_private_keys(private_keys)
         else:
             print("Operation cancelled.")
-    
+
     def check_private_keys(self, private_keys):
         """Check balances for manually entered private keys."""
         if not self.check_binaries():
             return
-        
+
         self.node = Node()
         self.dump_dir = tempfile.mkdtemp(prefix="wallet_keys_")
-        
+
         print(f"\n{Colors.BOLD}Starting Bitcoin Core node...{Colors.END}")
         self.node.start()
-        
+
         results = []
         try:
             for i, privkey in enumerate(private_keys, 1):
                 print(f"\n{Colors.BLUE}[{i}/{len(private_keys)}]{Colors.END} Checking key...")
-                
+
                 # Use bitcoin-cli to get address from private key
                 wallet_name = f"manual_key_{i}"
                 wdir = os.path.join(self.node.datadir, "wallets", wallet_name)
                 os.makedirs(wdir, exist_ok=True)
-                
+
                 # Create wallet
                 r = self.node.cli("createwallet", wallet_name)
                 if r.returncode != 0:
                     print(f"{Colors.RED}✗ Could not create wallet: {r.stderr.strip()[:100]}{Colors.END}")
                     continue
-                
+
                 # Import private key
                 r = self.node.cli(f"-rpcwallet={wallet_name}", "importprivkey", privkey, f"key_{i}", "false")
                 if r.returncode != 0:
                     print(f"{Colors.RED}✗ Could not import key: {r.stderr.strip()[:100]}{Colors.END}")
                     self.node.cli("unloadwallet", wallet_name)
                     continue
-                
+
                 # Rescan
                 print(f"{Colors.BLUE}Rescanning blockchain...{Colors.END}")
                 self.node.cli(f"-rpcwallet={wallet_name}", "rescanblockchain")
-                
+
                 # Get address
                 r = self.node.cli(f"-rpcwallet={wallet_name}", "getaddressesbylabel", f"key_{i}")
                 if r.returncode != 0:
                     print(f"{Colors.RED}✗ Could not get address{Colors.END}")
                     self.node.cli("unloadwallet", wallet_name)
                     continue
-                
+
                 try:
                     addresses = list(json.loads(r.stdout).keys())
                     if not addresses:
                         print(f"{Colors.YELLOW}No address found{Colors.END}")
                         self.node.cli("unloadwallet", wallet_name)
                         continue
-                    
+
                     address = addresses[0]
                     print(f"{Colors.CYAN}Address: {address}{Colors.END}")
-                    
+
                     # Check balance
                     balance = get_balance_btc(address, self.config['retries'], self.config['api_delay'])
                     if balance is not None:
@@ -291,38 +291,38 @@ class WalletDashboard:
                         })
                     else:
                         print(f"{Colors.RED}✗ Could not fetch balance (API error){Colors.END}")
-                
+
                 except json.JSONDecodeError:
                     print(f"{Colors.RED}✗ Invalid response from Bitcoin Core{Colors.END}")
                 finally:
                     self.node.cli("unloadwallet", wallet_name)
                     time.sleep(self.config['api_delay'])
-        
+
         finally:
             self.node.stop()
             self.node.cleanup()
             if not self.config['keep_dumps']:
                 shutil.rmtree(self.dump_dir, ignore_errors=True)
-        
+
         self.results = results
         if results:
             self.display_results()
             self.export_results("manual_keys")
-    
+
     def option_4_view_reports(self):
         """Option 4: View previous reports."""
         print(f"\n{Colors.BOLD}Option 4: Previous Reports{Colors.END}")
         print("-" * 50)
-        
+
         reports = sorted(glob.glob(os.path.join(self.config['output_dir'], "*.csv")))
         if not reports:
             print(f"{Colors.RED}No reports found.{Colors.END}")
             return
-        
+
         print(f"\n{Colors.GREEN}Found {len(reports)} report(s):{Colors.END}\n")
         for i, report in enumerate(reports, 1):
             print(f"{Colors.BLUE}[{i}]{Colors.END} {os.path.basename(report)}")
-        
+
         while True:
             choice = input(f"\n{Colors.YELLOW}Select report (1-{len(reports)}) or 0 to cancel: {Colors.END}").strip()
             if choice == '0':
@@ -335,7 +335,7 @@ class WalletDashboard:
             except ValueError:
                 pass
             print(f"{Colors.RED}Invalid selection.{Colors.END}")
-    
+
     def option_5_settings(self):
         """Option 5: Configure settings."""
         print(f"\n{Colors.BOLD}Option 5: Settings{Colors.END}")
@@ -344,40 +344,41 @@ class WalletDashboard:
         print(f"{Colors.BLUE}[2]{Colors.END} Keep dump files (current: {self.config['keep_dumps']})")
         print(f"{Colors.BLUE}[3]{Colors.END} Output directory (current: {self.config['output_dir']})")
         print(f"{Colors.BLUE}[0]{Colors.END} Back\n")
-        
+
         choice = input(f"{Colors.YELLOW}Choose setting to modify (0-3): {Colors.END}").strip()
-        
+
         if choice == '1':
             try:
-                delay = float(input(f"Enter API delay in seconds (default 0.3): {Colors.YELLOW}").strip() or "0.3") + Colors.END
+                delay_input = input(f"{Colors.YELLOW}Enter API delay in seconds (default 0.3): {Colors.END}").strip()
+                delay = float(delay_input) if delay_input else 0.3
                 if delay >= 0:
                     self.config['api_delay'] = delay
                     print(f"{Colors.GREEN}✓ Updated{Colors.END}")
             except ValueError:
                 print(f"{Colors.RED}Invalid input{Colors.END}")
-        
+
         elif choice == '2':
             self.config['keep_dumps'] = not self.config['keep_dumps']
             print(f"{Colors.GREEN}✓ Updated to {self.config['keep_dumps']}{Colors.END}")
-        
+
         elif choice == '3':
-            new_dir = input(f"Enter output directory: {Colors.YELLOW}").strip() + Colors.END
+            new_dir = input(f"{Colors.YELLOW}Enter output directory: {Colors.END}").strip()
             if new_dir:
                 self.config['output_dir'] = new_dir
                 self.setup_output_dir()
                 print(f"{Colors.GREEN}✓ Updated{Colors.END}")
-    
+
     def run_scan(self):
         """Execute the wallet scan."""
         if not self.check_binaries():
             return
-        
+
         self.node = Node()
         self.dump_dir = tempfile.mkdtemp(prefix="wallet_dumps_")
-        
+
         print(f"\n{Colors.BOLD}Starting Bitcoin Core node...{Colors.END}")
         self.node.start()
-        
+
         rows = []
         try:
             for i, wf in enumerate(self.wallet_files, 1):
@@ -385,7 +386,7 @@ class WalletDashboard:
                 total = len(self.wallet_files)
                 print(f"\n{Colors.BLUE}[{i}/{total}]{Colors.END} {Colors.BOLD}{name}{Colors.END}")
                 print("-" * 40)
-                
+
                 dump_file = dump_wallet(self.node, wf, self.dump_dir)
                 if not dump_file:
                     print(f"{Colors.RED}✗ Could not load wallet{Colors.END}")
@@ -394,17 +395,17 @@ class WalletDashboard:
                         "funded_addresses": 0, "total_btc": 0.0, "status": "FAILED"
                     })
                     continue
-                
+
                 addrs = extract_addresses(dump_file)
                 total_btc, funded, checked = 0.0, 0, 0
-                
+
                 print(f"{Colors.CYAN}Checking {len(addrs)} address(es)...{Colors.END}")
-                
+
                 for j, a in enumerate(addrs, 1):
                     bal = get_balance_btc(a, self.config['retries'], self.config['api_delay'])
                     if (j % 10 == 0):
                         print(f"  [{j}/{len(addrs)}] ", end="", flush=True)
-                    
+
                     if bal is None:
                         continue
                     checked += 1
@@ -412,12 +413,12 @@ class WalletDashboard:
                         funded += 1
                         total_btc += bal
                         print(f"\n{Colors.GREEN}  ✓ Found: {a}: {bal:.8f} BTC{Colors.END}")
-                
+
                 status = "HAS BALANCE" if total_btc > 0 else "EMPTY"
                 color = Colors.GREEN if total_btc > 0 else Colors.YELLOW
-                
+
                 print(f"\n{color}Result: {total_btc:.8f} BTC across {funded} address(es) [{status}]{Colors.END}")
-                
+
                 rows.append({
                     "wallet": name,
                     "addresses_found": len(addrs),
@@ -426,7 +427,7 @@ class WalletDashboard:
                     "total_btc": round(total_btc, 8),
                     "status": status
                 })
-        
+
         finally:
             self.node.stop()
             self.node.cleanup()
@@ -434,57 +435,57 @@ class WalletDashboard:
                 shutil.rmtree(self.dump_dir, ignore_errors=True)
             else:
                 print(f"\n{Colors.YELLOW}Dump files kept at: {self.dump_dir}{Colors.END}")
-        
+
         self.results = rows
         if rows:
             self.display_results()
             self.export_results("scan")
-    
+
     def display_results(self):
         """Display results in formatted table."""
         if not self.results:
             print(f"{Colors.RED}No results to display.{Colors.END}")
             return
-        
+
         self.results.sort(key=lambda r: r.get("total_btc", 0) if isinstance(r.get("total_btc"), (int, float)) else 0, reverse=True)
-        
+
         print(f"\n{Colors.BOLD}{'='*70}")
         print(f"RESULTS SUMMARY")
         print(f"{'='*70}{Colors.END}\n")
-        
+
         # Summary stats
         total_btc_all = sum(r.get("total_btc", 0) if isinstance(r.get("total_btc"), (int, float)) else 0 for r in self.results)
         funded_count = sum(1 for r in self.results if r.get("status") == "HAS BALANCE")
-        
+
         print(f"{Colors.GREEN}Total BTC found: {total_btc_all:.8f}{Colors.END}")
         print(f"{Colors.GREEN}Wallets with balance: {funded_count}/{len(self.results)}{Colors.END}\n")
-        
+
         # Detailed table
         print(f"{Colors.BOLD}{'Wallet':<20} {'Addresses':<12} {'Funded':<10} {'Balance (BTC)':<15} {'Status':<15}{Colors.END}")
         print("-" * 72)
-        
+
         for r in self.results:
             wallet = r.get("wallet", "unknown")[:19]
             addr_found = r.get("addresses_found", 0)
             funded = r.get("funded_addresses", 0)
             balance = r.get("total_btc", 0)
             status = r.get("status", "UNKNOWN")
-            
+
             color = Colors.GREEN if status == "HAS BALANCE" else Colors.YELLOW
-            
+
             print(f"{wallet:<20} {addr_found:<12} {funded:<10} {balance:<15.8f} {color}{status:<15}{Colors.END}")
-        
+
         print()
-    
+
     def export_results(self, prefix="scan"):
         """Export results to CSV and JSON."""
         if not self.results:
             return
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         csv_path = os.path.join(self.config['output_dir'], f"{prefix}_{timestamp}.csv")
         json_path = os.path.join(self.config['output_dir'], f"{prefix}_{timestamp}.json")
-        
+
         # CSV export
         try:
             with open(csv_path, 'w', newline='') as f:
@@ -496,7 +497,7 @@ class WalletDashboard:
             print(f"{Colors.GREEN}✓ CSV report: {csv_path}{Colors.END}")
         except Exception as e:
             print(f"{Colors.RED}✗ CSV export failed: {str(e)}{Colors.END}")
-        
+
         # JSON export
         try:
             with open(json_path, 'w') as f:
@@ -504,48 +505,48 @@ class WalletDashboard:
             print(f"{Colors.GREEN}✓ JSON report: {json_path}{Colors.END}")
         except Exception as e:
             print(f"{Colors.RED}✗ JSON export failed: {str(e)}{Colors.END}")
-    
+
     def display_report(self, report_path):
         """Display a CSV report in formatted table."""
         try:
             with open(report_path, 'r') as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
-            
+
             print(f"\n{Colors.BOLD}{'='*70}")
             print(f"REPORT: {os.path.basename(report_path)}")
             print(f"{'='*70}{Colors.END}\n")
-            
+
             # Summary
             total_btc = sum(float(r.get("total_btc", 0)) for r in rows)
             funded = sum(1 for r in rows if r.get("status") == "HAS BALANCE")
-            
+
             print(f"{Colors.GREEN}Total BTC: {total_btc:.8f}{Colors.END}")
             print(f"{Colors.GREEN}Funded wallets: {funded}/{len(rows)}{Colors.END}\n")
-            
+
             # Table
             print(f"{Colors.BOLD}{'Wallet':<20} {'Addresses':<12} {'Balance (BTC)':<15}{Colors.END}")
             print("-" * 47)
-            
+
             for r in rows:
                 wallet = r.get("wallet", "unknown")[:19]
                 addrs = r.get("addresses_checked", 0)
                 balance = float(r.get("total_btc", 0))
-                
+
                 color = Colors.GREEN if balance > 0 else Colors.YELLOW
                 print(f"{wallet:<20} {addrs:<12} {color}{balance:<15.8f}{Colors.END}")
-            
+
             print()
         except Exception as e:
             print(f"{Colors.RED}Error reading report: {str(e)}{Colors.END}")
-    
+
     def run(self):
         """Main dashboard loop."""
         while True:
             self.print_header()
             self.print_menu()
             choice = self.get_menu_choice()
-            
+
             if choice == '0':
                 print(f"\n{Colors.GREEN}Thank you for using Wallet Scanner. Goodbye!{Colors.END}\n")
                 break
@@ -559,7 +560,7 @@ class WalletDashboard:
                 self.option_4_view_reports()
             elif choice == '5':
                 self.option_5_settings()
-            
+
             input(f"\n{Colors.YELLOW}Press Enter to continue...{Colors.END}")
 
 
@@ -673,10 +674,10 @@ Examples:
     parser.add_argument("--legacy", action="store_true",
                        help="Use legacy command-line interface instead of dashboard")
     args = parser.parse_args()
-    
+
     if args.legacy:
-        # Fall back to original scan_wallets.py
-        print("Legacy mode not implemented yet. Use --help for dashboard mode.")
+        print("Legacy CLI mode is available via scan_wallets.py")
+        print("Run: python3 scan_wallets.py --help")
     else:
         # Launch dashboard
         dashboard = WalletDashboard()
