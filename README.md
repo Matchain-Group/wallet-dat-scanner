@@ -27,13 +27,6 @@ Bitcoin Wallet Scanner helps users identify wallet information, check wallet str
 - Analyze wallet data structure
 - Help users understand wallet problems
 - Provide useful information for troubleshooting
-
-### 🔐 Privacy Focused
-- Does not require private keys
-- Does not request seed phrases
-- Uses only public blockchain information
-- Keeps user wallet credentials safe
-
 ---
 
 # 🎯 Purpose
