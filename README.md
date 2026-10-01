@@ -49,9 +49,6 @@ Bitcoin Wallet Scanner provides a simple way to:
 2. Scanner collects public blockchain information
 3. Wallet activity is analyzed
 4. Results are displayed in an easy-to-understand format
-
-No private keys or recovery phrases are required.
-
 ---
 
 # 🖥 Installation
